@@ -1,5 +1,360 @@
-<!DOCTYPE html>
-<html>
-<head><title>Meine erste Seite</title></head>
-<body><h1>Hallo Welt!</h1></body>
-</html>
+import React, { useState, useEffect, useRef } from 'react';
+
+// Custom hook for scroll animations
+const useIntersectionObserver = (ref: React.RefObject<HTMLElement>, options: IntersectionObserverInit = {}) => {
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        setIsVisible(true);
+        observer.unobserve(entry.target);
+      }
+    }, { threshold: 0.1, ...options });
+
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, [ref, options]);
+
+  return isVisible;
+};
+
+// Accordion component for FAQ
+const AccordionItem: React.FC<{ question: string; answer: string }> = ({ question, answer }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div className="border-b border-stone-200 py-5">
+      <button
+        className="flex justify-between items-center w-full text-left group"
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        <span className="font-serif text-lg text-stone-800 tracking-tight">{question}</span>
+        <span className={`transition-transform duration-300 text-2xl text-stone-500 ${isOpen ? 'rotate-45' : ''}`}>
+          +
+        </span>
+      </button>
+      <div
+        className={`overflow-hidden transition-all duration-500 ease-out ${
+          isOpen ? 'max-h-96 opacity-100 mt-3' : 'max-h-0 opacity-0'
+        }`}
+      >
+        <p className="text-stone-600 text-base leading-relaxed">{answer}</p>
+      </div>
+    </div>
+  );
+};
+
+// Pricing card component
+const PricingCard: React.FC<{
+  title: string;
+  price: string;
+  description: string;
+  features: string[];
+  highlighted?: boolean;
+}> = ({ title, price, description, features, highlighted }) => {
+  return (
+    <div
+      className={`rounded-3xl transition-all duration-500 hover:-translate-y-2 group ${
+        highlighted
+          ? 'bg-stone-900 text-white shadow-2xl'
+          : 'bg-white/80 backdrop-blur-sm border border-stone-200 hover:shadow-xl'
+      }`}
+    >
+      <div className="p-7 md:p-8">
+        <h3 className="text-xl font-serif tracking-tight mb-1">{title}</h3>
+        <div className={`text-3xl font-light mt-4 ${highlighted ? 'text-amber-200' : 'text-stone-800'}`}>
+          {price}
+          <span className="text-sm font-normal opacity-70"> / package</span>
+        </div>
+        <p className={`text-sm mt-2 ${highlighted ? 'text-stone-300' : 'text-stone-500'}`}>{description}</p>
+        <ul className="mt-6 space-y-2">
+          {features.map((feature, idx) => (
+            <li key={idx} className="flex items-start gap-2 text-sm">
+              <span className="text-amber-500 mt-0.5">✓</span>
+              <span className={highlighted ? 'text-stone-200' : 'text-stone-700'}>{feature}</span>
+            </li>
+          ))}
+        </ul>
+        <button
+          className={`mt-8 w-full py-3 rounded-full transition-all duration-300 font-medium tracking-wide ${
+            highlighted
+              ? 'bg-white text-stone-900 hover:bg-amber-50'
+              : 'bg-stone-900 text-white hover:bg-stone-800'
+          }`}
+        >
+          Reserve Spot
+        </button>
+      </div>
+    </div>
+  );
+};
+
+const App: React.FC = () => {
+  const [scrolled, setScrolled] = useState(false);
+  const heroRef = useRef<HTMLElement>(null);
+  const heroVisible = useIntersectionObserver(heroRef);
+  const whySantaMartaRef = useRef<HTMLElement>(null);
+  const whySantaMartaVisible = useIntersectionObserver(whySantaMartaRef);
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 50);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const experiences = [
+    {
+      title: "1 Week Immersion",
+      price: "CHF 490",
+      description: "The perfect reset — Spanish, sun, and soul.",
+      features: ["Morning Spanish classes", "Beach & culture excursions", "Group salsa & cooking", "Welcome & farewell dinner", "24/7 concierge support"],
+    },
+    {
+      title: "2 Week Transformation",
+      price: "CHF 890",
+      description: "Rapid growth, Caribbean lifestyle, real confidence.",
+      features: ["Intensive Spanish track", "Tayrona National Park tour", "Minca mountains hike", "Coffee farm visit", "All 1-week inclusions"],
+      highlighted: true,
+    },
+    {
+      title: "4 Week Relocation",
+      price: "CHF 1,590",
+      description: "Deep immersion, life reset & elite network.",
+      features: ["Full month Spanish Mastery", "Private mentorship", "Weekend adventure package", "Colombian business insights", "Certificate of fluency"],
+    },
+  ];
+
+  const vipCoaching = {
+    title: "VIP Private Coaching",
+    price: "CHF 59/h",
+    description: "Tailored 1:1 lessons, any schedule, your goals.",
+    features: ["Custom curriculum", "Flexible timing", "Focus on business/professional Spanish"],
+  };
+
+  const whySantaMarta = [
+    { name: "Tayrona National Park", image: "https://images.unsplash.com/photo-1560279347-f14ad1bee76a?w=800&auto=format", desc: "Rainforest meets turquoise sea" },
+    { name: "Caribbean Beaches", image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&auto=format", desc: "Powder sand & golden sunsets" },
+    { name: "Minca Mountains", image: "https://images.unsplash.com/photo-1582435622878-f0b9f2a9d686?w=800&auto=format", desc: "Cool waterfalls, jungle vibes" },
+    { name: "Salsa Nights", image: "https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?w=800&auto=format", desc: "Dance until sunrise" },
+    { name: "Coffee Farms", image: "https://images.unsplash.com/photo-1442512595331-e89e73853f31?w=800&auto=format", desc: "World's finest arabica" },
+    { name: "Tropical Lifestyle", image: "https://images.unsplash.com/photo-1532974297617-c0f05fe48bff?w=800&auto=format", desc: "Pura vida every day" },
+  ];
+
+  const whyChooseUs = [
+    "Swiss Reliability", "Colombian Warmth", "Premium Student Care",
+    "Fast WhatsApp Support", "Boutique Class Sizes", "Life‑changing Experience"
+  ];
+
+  const testimonials = [
+    {
+      name: "Dr. Markus Fischer",
+      loc: "Zürich, Switzerland",
+      text: "As a CEO, I needed efficiency and soul. Siete Olas delivered both. In two weeks, my Spanish transformed—and my mindset even more. The attention to detail is Swiss, the experience is pure magic.",
+      image: "https://randomuser.me/api/portraits/men/32.jpg"
+    },
+    {
+      name: "Sophie Hartmann",
+      loc: "Vienna, Austria",
+      text: "I came for the language, I left with a new family. The Colombian warmth combined with flawless organisation made this the most luxurious journey of my life. Already booked for 4 weeks next year.",
+      image: "https://randomuser.me/api/portraits/women/68.jpg"
+    },
+    {
+      name: "Lukas Meier",
+      loc: "Munich, Germany",
+      text: "From the WhatsApp concierge to the beachfront classes—every detail was perfection. I advanced 3 levels in 1 month. Worth every franc. This is not a course; it's a reinvention.",
+      image: "https://randomuser.me/api/portraits/men/75.jpg"
+    }
+  ];
+
+  return (
+    <div className="font-sans antialiased bg-stone-50 text-stone-800 scroll-smooth">
+      {/* Simple Head for Meta */}
+      <head>
+        <title>Siete Olas Premium Experience | Spanish Immersion in Santa Marta</title>
+        <meta name="description" content="Reinvent yourself in Santa Marta. Swiss precision, Colombian soul — luxury Spanish retreats on the Caribbean coast. High‑touch, exclusive, transformative." />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600&family=Cormorant+Garamond:wght@400;500;600;700&display=swap" rel="stylesheet" />
+      </head>
+
+      {/* Sticky Header */}
+      <div className={`fixed top-0 w-full z-50 transition-all duration-500 ${scrolled ? 'bg-white/80 backdrop-blur-xl shadow-sm py-4' : 'bg-transparent py-6'}`}>
+        <div className="max-w-7xl mx-auto px-5 md:px-8 flex justify-between items-center">
+          <h1 className="text-xl tracking-wide font-light uppercase"><span className="font-serif font-semibold">Siete Olas</span> <span className="text-amber-600">Premium</span></h1>
+          <div className="flex gap-3">
+            <button className="px-5 py-2 rounded-full bg-stone-900 text-white text-sm font-medium hover:bg-stone-800 transition-all">Apply Now</button>
+            <button className="px-5 py-2 rounded-full border border-stone-300 text-stone-800 text-sm font-medium hover:bg-white transition-all hidden md:block">WhatsApp Concierge</button>
+          </div>
+        </div>
+      </div>
+
+      <main>
+        {/* Hero Section */}
+        <section ref={heroRef} className="relative h-screen max-h-[900px] min-h-[700px] flex items-center justify-center overflow-hidden">
+          <div className="absolute inset-0 z-0">
+            <img src="https://images.unsplash.com/photo-1519046904884-53103b34b206?q=80&w=2070&auto=format" alt="Luxury Caribbean beach Santa Marta" className="w-full h-full object-cover scale-105 animate-slow-zoom" />
+            <div className="absolute inset-0 bg-gradient-to-b from-stone-900/40 via-stone-900/20 to-stone-900/70"></div>
+          </div>
+          <div className={`relative z-10 max-w-5xl mx-auto text-center px-5 transition-all duration-1000 delay-300 ${heroVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+            <h2 className="font-serif text-5xl md:text-7xl lg:text-8xl text-white mb-5 tracking-tight leading-[1.1]">Reinvent Yourself<br />in Santa Marta</h2>
+            <p className="text-white/90 text-lg md:text-xl max-w-2xl mx-auto font-light leading-relaxed">More than a language course — a curated Caribbean transformation experience with Swiss reliability, Colombian warmth, beaches, growth and adventure.</p>
+            <div className="flex flex-wrap justify-center gap-5 mt-10">
+              <button className="px-8 py-4 bg-white text-stone-900 rounded-full font-semibold text-lg hover:bg-amber-50 transition-all shadow-xl">Apply Now</button>
+              <button className="px-8 py-4 bg-transparent border border-white/70 text-white rounded-full font-medium text-lg hover:bg-white/10 transition-all backdrop-blur-sm flex items-center gap-2">💬 WhatsApp Concierge</button>
+            </div>
+          </div>
+          <div className="absolute bottom-10 left-0 right-0 flex justify-center animate-bounce">
+            <div className="w-6 h-10 border-2 border-white rounded-full flex justify-center"><div className="w-1 h-2 bg-white rounded-full mt-2"></div></div>
+          </div>
+        </section>
+
+        {/* Trust Bar */}
+        <div className="bg-white/70 backdrop-blur-md border-b border-stone-100 sticky top-16 z-40 hidden md:block">
+          <div className="max-w-7xl mx-auto px-8 py-4 flex justify-between text-stone-700 text-sm font-medium">
+            <span className="flex items-center gap-2">🇨🇭🤝🇨🇴 Swiss-Colombian Founders</span>
+            <span className="flex items-center gap-2">✨ Small Elite Groups (max 6)</span>
+            <span className="flex items-center gap-2">⭐ Premium 24/7 Support</span>
+            <span className="flex items-center gap-2">🔒 Limited Monthly Spots</span>
+          </div>
+        </div>
+
+        {/* Signature Experiences */}
+        <section className="py-24 md:py-32 px-5 md:px-8 max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <span className="text-amber-600 text-sm uppercase tracking-wider font-semibold">Signature journeys</span>
+            <h3 className="font-serif text-4xl md:text-5xl mt-2 mb-4">Invest in your evolution</h3>
+            <p className="text-stone-500 max-w-xl mx-auto">Choose your depth of transformation — all include premium instruction, curated adventures, and concierge support.</p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-8">
+            {experiences.map((xp, i) => (
+              <PricingCard key={i} title={xp.title} price={xp.price} description={xp.description} features={xp.features} highlighted={xp.highlighted} />
+            ))}
+          </div>
+          <div className="mt-12 max-w-md mx-auto">
+            <PricingCard title={vipCoaching.title} price={vipCoaching.price} description={vipCoaching.description} features={vipCoaching.features} />
+          </div>
+        </section>
+
+        {/* Why Santa Marta */}
+        <section ref={whySantaMartaRef} className="py-24 md:py-32 bg-white">
+          <div className="max-w-7xl mx-auto px-5 md:px-8">
+            <div className="text-center mb-16">
+              <span className="text-amber-600 text-sm uppercase tracking-wider">The setting</span>
+              <h3 className="font-serif text-4xl md:text-5xl mt-2">Why Santa Marta?</h3>
+              <p className="text-stone-500 max-w-2xl mx-auto mt-3">Where the Sierra Nevada meets the Caribbean — a playground for the senses.</p>
+            </div>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-7">
+              {whySantaMarta.map((item, idx) => (
+                <div key={idx} className={`group rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500 ${whySantaMartaVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`} style={{ transitionDelay: `${idx * 100}ms` }}>
+                  <div className="h-64 overflow-hidden"><img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition duration-700" /></div>
+                  <div className="p-5 bg-white">
+                    <h4 className="font-serif text-xl">{item.name}</h4>
+                    <p className="text-stone-500 text-sm mt-1">{item.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Why Choose Us */}
+        <section className="py-24 md:py-32 px-5 md:px-8 max-w-7xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div>
+              <span className="text-amber-600 text-sm uppercase tracking-wider">The difference</span>
+              <h3 className="font-serif text-4xl md:text-5xl mt-2 mb-6">Swiss precision meets Caribbean soul</h3>
+              <p className="text-stone-500 leading-relaxed mb-8">Every detail is orchestrated for effortless luxury — from punctual transfers to hand‑picked instructors. Yet the warmth of Colombia transforms it into something deeply human.</p>
+              <div className="grid grid-cols-2 gap-4">
+                {whyChooseUs.map((item, idx) => (
+                  <div key={idx} className="flex items-center gap-2"><span className="text-amber-500 text-xl">✓</span><span className="text-stone-700 font-medium">{item}</span></div>
+                ))}
+              </div>
+            </div>
+            <div className="relative rounded-3xl overflow-hidden shadow-2xl aspect-[4/3]">
+              <img src="https://images.unsplash.com/photo-1523800503107-5bc3ba2a6f81?w=1000&auto=format" alt="Luxury Spanish class on beach" className="w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-stone-900/30 to-transparent"></div>
+            </div>
+          </div>
+        </section>
+
+        {/* Testimonials */}
+        <section className="py-24 bg-stone-100">
+          <div className="max-w-7xl mx-auto px-5 md:px-8">
+            <div className="text-center mb-16">
+              <span className="text-amber-600 text-sm uppercase tracking-wider">Voices</span>
+              <h3 className="font-serif text-4xl md:text-5xl mt-2">Transformed by the waves</h3>
+            </div>
+            <div className="grid md:grid-cols-3 gap-8">
+              {testimonials.map((t, idx) => (
+                <div key={idx} className="bg-white p-7 rounded-2xl shadow-md hover:shadow-xl transition duration-500">
+                  <div className="flex items-center gap-3 mb-4">
+                    <img src={t.image} alt={t.name} className="w-12 h-12 rounded-full object-cover" />
+                    <div><p className="font-semibold">{t.name}</p><p className="text-xs text-stone-400">{t.loc}</p></div>
+                  </div>
+                  <p className="text-stone-600 italic leading-relaxed">"{t.text}"</p>
+                  <div className="mt-4 text-amber-400 text-lg">★★★★★</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* FAQ */}
+        <section className="py-24 md:py-32 px-5 md:px-8 max-w-4xl mx-auto">
+          <div className="text-center mb-12">
+            <span className="text-amber-600 text-sm uppercase tracking-wider">Clarity</span>
+            <h3 className="font-serif text-4xl md:text-5xl mt-2">Questions, answered.</h3>
+          </div>
+          <div className="bg-white/60 rounded-3xl p-6 md:p-8 shadow-sm">
+            <AccordionItem question="Is Colombia safe for solo travelers?" answer="Absolutely. Santa Marta is one of Colombia's most welcoming and tourist-friendly destinations. Our team provides 24/7 local support, secure transport, and insider knowledge. Thousands of European guests have traveled with us without incident — we prioritize your safety with Swiss-level protocols." />
+            <AccordionItem question="Do I need Spanish before arriving?" answer="Not at all. Our courses cater to all levels — from absolute beginners to advanced. Our immersive method ensures you start speaking from day one." />
+            <AccordionItem question="Can you help with accommodation?" answer="Yes — we offer hand-picked boutique villas, beachfront apartments, and luxury coliving spaces. Our concierge will match you with the perfect stay (from CHF 50–150/night)." />
+            <AccordionItem question="How fast can I improve?" answer="Most clients reach A2 to B1 in 2 weeks with our intensive method. After 4 weeks, conversational fluency is very common. Plus, you'll be immersed 24/7." />
+          </div>
+        </section>
+
+        {/* Final CTA */}
+        <section className="py-28 relative overflow-hidden">
+          <div className="absolute inset-0 z-0">
+            <img src="https://images.unsplash.com/photo-1538688523618-a9f5e5a5b38c?q=80&w=2070&auto=format" alt="Luxury sunset Santa Marta" className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-stone-900/60 backdrop-blur-[2px]"></div>
+          </div>
+          <div className="relative z-10 text-center max-w-3xl mx-auto px-5">
+            <h3 className="font-serif text-5xl md:text-6xl text-white mb-4">Limited Spots Each Month</h3>
+            <p className="text-white/80 text-lg mb-10">Only 6 guests per intake to preserve the boutique experience. Secure your transformation today.</p>
+            <button className="px-10 py-5 bg-white text-stone-900 rounded-full text-lg font-semibold hover:bg-amber-50 transition shadow-2xl">Reserve Your Experience →</button>
+            <p className="text-white/60 text-sm mt-8">🔒 Deposit only 30% • Free cancellation up to 30 days</p>
+          </div>
+        </section>
+
+        {/* Footer */}
+        <footer className="bg-stone-900 text-stone-400 py-12 text-center text-sm">
+          <div className="max-w-7xl mx-auto px-5">© 2025 Siete Olas Premium Experience — Swiss-Colombian luxury immersion. Santa Marta, Colombia.</div>
+        </footer>
+      </main>
+
+      {/* Floating WhatsApp */}
+      <a href="https://wa.me/573001234567?text=Hello%20Siete%20Olas%20—%20I%20want%20to%20transform" target="_blank" rel="noopener noreferrer" className="fixed bottom-6 right-6 bg-[#25D366] text-white p-4 rounded-full shadow-2xl hover:scale-105 transition z-50 flex items-center justify-center">
+        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M12.032 2.001c-5.514 0-10 4.486-10 10 0 1.78.475 3.472 1.367 4.978l-1.448 5.069 5.202-1.416a9.963 9.963 0 0 0 9.362-5.785 9.996 9.996 0 0 0-5.483-13.846zM12.032 18.55c-1.343 0-2.653-.361-3.792-1.038l-.271-.162-3.087.84.842-3.008-.177-.282a8.033 8.033 0 0 1-1.23-4.262c0-4.419 3.595-8.014 8.014-8.014 2.136 0 4.147.835 5.66 2.348a7.957 7.957 0 0 1 2.347 5.66c0 4.419-3.595 8.014-8.014 8.014zm4.389-5.836c-.242-.121-1.427-.705-1.647-.786-.22-.08-.381-.121-.542.121-.16.242-.623.786-.763.946-.141.161-.281.181-.523.06-.242-.121-1.02-.376-1.942-1.197-.719-.64-1.203-1.428-1.345-1.67-.141-.242-.015-.374.106-.496.108-.108.242-.284.363-.426.12-.142.162-.242.242-.403.081-.162.04-.303-.02-.426-.06-.121-.542-1.305-.743-1.788-.196-.47-.396-.405-.542-.413-.142-.008-.302-.008-.464-.008-.16 0-.42.062-.642.282-.22.22-.844.825-.844 2.01 0 1.186.865 2.335.986 2.497.12.162 1.702 2.597 4.123 3.64.576.248 1.025.397 1.375.508.577.182 1.104.156 1.52.094.464-.07 1.427-.583 1.628-1.146.202-.563.202-1.045.142-1.146-.06-.1-.22-.16-.462-.282z"/></svg>
+      </a>
+
+      {/* custom keyframes in style */}
+      <style>{`
+        @keyframes slow-zoom {
+          0% { transform: scale(1); }
+          100% { transform: scale(1.08); }
+        }
+        .animate-slow-zoom {
+          animation: slow-zoom 20s ease-out forwards;
+        }
+        body {
+          font-family: 'Inter', sans-serif;
+        }
+        .font-serif {
+          font-family: 'Cormorant Garamond', serif;
+        }
+      `}</style>
+    </div>
+  );
+};
+
+export default App;
